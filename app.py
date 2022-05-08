@@ -1,21 +1,10 @@
+from crypt import methods
+
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy  # pip3 isntall flask sqlalchemy flask-sqlalchemy
 from constant import *
 
-from Orders import ORDERS
-from Offers import OFFERS
-from Users import USERS
-
-import json
-
-from sqlalchemy import ForeignKey
-
-
-def get_json(filename):
-    """Возвращает данные из Json"""
-    with open(filename, encoding='utf-8') as file:
-        return json.load(file)
-
+from utils import *
 
 app = Flask(__name__)
 
@@ -50,63 +39,109 @@ class Order(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
 
+
 class Offer(db.Model):
     __tablename__ = 'offer'
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     executor_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    # Нужны ли тут db.relationship?
+
     order = db.relationship('Order')
     executor = db.relationship('User')
 
 
-def get_sql_data(users, orders, offers):
+def post_sql_data(users, orders, offers):
+    users_list = []
     for user in users:
-        user_add = User(
-            id=user['id'],
-            first_name=user['first_name'],
-            last_name=user['last_name'],
-            age=user['age'],
-            email=user['email'],
-            role=user['role'],
-            phone=user['phone']
+        users_list.append(
+            User(
+                id=user['id'],
+                first_name=user['first_name'],
+                last_name=user['last_name'],
+                age=user['age'],
+                email=user['email'],
+                role=user['role'],
+                phone=user['phone']
+            )
         )
-        db.session.add(user_add)
+        with db.session.begin():
+            db.session.add_all(users_list)
 
+    add_list = []
     for order in orders:
-        order_add = Order(
-            id=order['id'],
-            name=order['name'],
-            description=order['description'],
-            start_date=order['start_date'],
-            end_date=order['end_date'],
-            address=order['address'],
-            price=order['price'],
-            customer_id=order['customer_id'],
-            executor_id=order['executor_id']
+        add_list.append(
+            Order(
+                id=order['id'],
+                name=order['name'],
+                description=order['description'],
+                start_date=datetime.strptime(order['start_date'], '%m/%d/%Y'),
+                end_date=datetime.strptime(order['end_date'], '%m/%d/%Y'),
+                address=order['address'],
+                price=order['price'],
+                customer_id=order['customer_id'],
+                executor_id=order['executor_id']
+            )
         )
-        db.session.add(order_add)
+        with db.session.begin():
+            db.session.add_all(add_list)
 
+    add_list = []
     for offer in offers:
-        offer_add = Offer(
-            id=offer['id'],
-            order_id=offer['order_id'],
-            executor_id=offer['executor_id']
+        add_list.append(
+            Offer(
+                id=offer['id'],
+                order_id=offer['order_id'],
+                executor_id=offer['executor_id']
+            )
         )
-        db.session.add(offer_add)
+    with db.session.begin():
+        db.session.add_all(add_list)
 
-    db.session.commit()
+
+users = get_json(USERS_JSON)
+orders = get_json(ORDERS_JSON)
+offers = get_json(OFFERS_JSON)
+
+db.create_all()
+post_sql_data(users, orders, offers)
 
 
-def main():
-    users = get_json(USERS_JSON)
-    orders = get_json(ORDERS_JSON)
-    offers = get_json(OFFERS_JSON)
+@app.route('/users/', methods=['GET', 'POST'])
+def users():
+    """Выводим/добавляем пользователей"""
+    pass
 
-    db.create_all()
-    get_sql_data(users, orders, offers)
 
-main()
+@app.route('/user/<int:uid>', method=['GET', 'PUT', 'DELETE'])
+def user_by_id(uid):
+    """Выводим/меняем/удаляем пользователя"""
+    pass
+
+
+@app.route('/orders/', methods=['GET', 'POST'])
+def orders():
+    """Выводим/добавляем заказы"""
+    pass
+
+
+@app.route('/order/<int:oid>')
+def order_by_id(oid):
+    """Выводим/меняем/удаляем заказ"""
+
+    pass
+
+
+@app.route('/offers/', methods=['GET', 'POST'])
+def offers():
+    """Выводим/добавляем предложения"""
+    pass
+
+
+@app.route('/offer/<int:oid>')
+def offer_by_id(oid):
+    """Выводим/меняем/удаляем предложение"""
+    pass
+
 
 if __name__ == '__main__':
     app.run()
