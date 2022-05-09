@@ -263,7 +263,7 @@ def offers():
             return 'Ключи запроса указаны неверно!'
 
 
-@app.route('/offers/<int:oid>')
+@app.route('/offers/<int:oid>/')
 def offer_by_id(oid):
     """Выводим/меняем/удаляем предложение"""
     offer = db.session.query(Offer).get(oid)
@@ -274,10 +274,10 @@ def offer_by_id(oid):
         return jsonify(get_offer(offer))
 
     elif request.method == 'PUT':
-        new_order = request.json
+        new_offer = request.json
 
-        offer.order_id = new_order.get('order_id', offer.order_id)
-        offer.executor_id = new_order.get('executor_id', offer.executor_id)
+        offer.order_id = new_offer.get('order_id', offer.order_id)
+        offer.executor_id = new_offer.get('executor_id', offer.executor_id)
 
         db.session.add(offer)
         db.session.commit()
