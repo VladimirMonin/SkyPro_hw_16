@@ -155,8 +155,8 @@ def user_by_id(uid):
         user.phone = new_user.get('phone', user.phone)
         user.role = new_user.get('role', user.role)
 
-# sqlalchemy.exc.InvalidRequestError: A transaction is already begun on this Session. FTW
-# sqlalchemy.orm.exc.UnmappedInstanceError: Class 'builtins.dict' is not mapped FTW(!!!)))))) коммитим User а не new_user
+        # sqlalchemy.exc.InvalidRequestError: A transaction is already begun on this Session. FTW
+        # sqlalchemy.orm.exc.UnmappedInstanceError: Class 'builtins.dict' is not mapped FTW(!!!)))))) коммитим User а не new_user
 
         db.session.add(user)
         db.session.commit()
@@ -181,7 +181,8 @@ def orders():
     elif request.method == 'POST':
         data = request.json
         logging.info(f'Данные полученные через POST запрос {data}')
-        allowed_keys = {'name', 'description', 'start_date', 'end_date', 'address', 'price', 'customer_id', 'executor_id'}
+        allowed_keys = {'name', 'description', 'start_date', 'end_date', 'address', 'price', 'customer_id',
+                        'executor_id'}
         if check_keys(data, allowed_keys):
             new_order = Order(
                 name=data.get('name'),
@@ -240,13 +241,52 @@ def order_by_id(oid):
 @app.route('/offers/', methods=['GET', 'POST'])
 def offers():
     """Выводим/добавляем предложения"""
-    pass
+    if request.method == 'GET':
+        result_list = []
+        for offer in db.session.query(Offer).all():
+            result_list.append(get_offer(offer))
+        return jsonify(result_list)
+
+    elif request.method == 'POST':
+        data = request.json
+        logging.info(f'Данные полученные через POST запрос {data}')
+        allowed_keys = {'order_id', 'executor_id'}
+        if check_keys(data, allowed_keys):
+            new_offer = Offer(
+                order_id=data.get('order_id'),
+                executor_id=data.get('executor_id')
+            )
+            with db.session.begin():
+                db.session.add(new_offer)
+            return 'Новое предложение успешно добавлено в базу!'
+        else:
+            return 'Ключи запроса указаны неверно!'
 
 
-@app.route('/offer/<int:oid>')
+@app.route('/offers/<int:oid>')
 def offer_by_id(oid):
     """Выводим/меняем/удаляем предложение"""
-    pass
+    offer = db.session.query(Offer).get(oid)
+    if not offer:
+        return "В базе нет предложения с таким ID"
+
+    elif request.method == 'GET':
+        return jsonify(get_offer(offer))
+
+    elif request.method == 'PUT':
+        new_order = request.json
+
+        offer.order_id = new_order.get('order_id', offer.order_id)
+        offer.executor_id = new_order.get('executor_id', offer.executor_id)
+
+        db.session.add(offer)
+        db.session.commit()
+        return 'Данные предложения успешно обновлены'
+
+    elif request.method == 'DELETE':
+        db.session.delete(offer)
+        db.session.commit()
+        return 'Предложение успешно удалено из базы!'
 
 
 if __name__ == '__main__':
