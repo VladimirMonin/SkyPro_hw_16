@@ -1,11 +1,10 @@
-
-
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy  # pip3 isntall flask sqlalchemy flask-sqlalchemy
 from constant import *
-
+import logging
 from utils import *
 
+logging.basicConfig(encoding='utf-8', level=logging.INFO)
 app = Flask(__name__)
 
 app.config['DEBUG'] = True
@@ -115,13 +114,59 @@ def users():
             result_list.append(get_user(user))
         return jsonify(result_list)
 
+    elif request.method == "POST":
+        data = request.json
+        logging.info(f'Данные полученные через POST запрос: {data}')
+        allowed_keys = {'age', 'email', 'first_name', 'last_name', 'phone', 'role'}
+        if check_keys(data, allowed_keys):
+            new_user = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                age=data['age'],
+                email=data['email'],
+                role=data['role'],
+                phone=data['phone']
+            )
+            with db.session.begin():
+                db.session.add(new_user)
+            return "Новый пользователь добавлен в базу!"
 
-# @app.route('/user/<int:uid>', method=['GET', 'PUT', 'DELETE'])
-# def user_by_id(uid):
-#     """Выводим/меняем/удаляем пользователя"""
-#     pass
-#
-#
+        else:
+            return 'Ключи запроса указаны неверно!'
+
+
+@app.route('/users/<int:uid>', methods=['GET', 'PUT', 'DELETE'])
+def user_by_id(uid):
+    """Выводим/меняем/удаляем пользователя"""
+    user = db.session.query(User).get(uid)
+    if not user:
+        return 'В базе нет пользователя с таким ID'
+
+    elif request.method == 'GET':
+        return jsonify(get_user(user))
+
+    elif request.method == 'PUT':
+        new_user = request.json
+
+        user.age = new_user.get('age', user.age)  # Если значение не меняется, оставит данные как есть.
+        user.email = new_user.get('email', user.email)
+        user.first_name = new_user.get('first_name', user.first_name)
+        user.last_name = new_user.get('last_name', user.last_name)
+        user.phone = new_user.get('phone', user.phone)
+        user.role = new_user.get('role', user.role)
+
+        with db.session.begin():
+            db.session.add(new_user)
+
+        return 'Данные пользователя успешно обновлены'
+
+    elif request.method == 'DELETE':
+        with db.session.begin():
+            db.session.delete(user)
+        return "Пользователь успешно удалён из базы!"
+
+
+
 # @app.route('/orders/', methods=['GET', 'POST'])
 # def orders():
 #     """Выводим/добавляем заказы"""

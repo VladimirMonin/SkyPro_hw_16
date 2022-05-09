@@ -43,3 +43,12 @@ def get_offer(offer):
         'order_id': offer.order_id,
         'executor_id': offer.executor_id
     }
+
+
+def check_keys(data: dict, keys: set) -> bool:
+    """Проверяем ключи на валидность"""
+    for key in data:
+        if key not in keys:
+            return False
+    else:
+        return True
