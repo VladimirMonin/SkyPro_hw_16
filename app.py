@@ -1,4 +1,4 @@
-from crypt import methods
+
 
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy  # pip3 isntall flask sqlalchemy flask-sqlalchemy
@@ -109,38 +109,42 @@ post_sql_data(users, orders, offers)
 @app.route('/users/', methods=['GET', 'POST'])
 def users():
     """Выводим/добавляем пользователей"""
-    pass
+    if request.method == "GET":
+        result_list = []
+        for user in db.session.query(User).all():
+            result_list.append(get_user(user))
+        return jsonify(result_list)
 
 
-@app.route('/user/<int:uid>', method=['GET', 'PUT', 'DELETE'])
-def user_by_id(uid):
-    """Выводим/меняем/удаляем пользователя"""
-    pass
-
-
-@app.route('/orders/', methods=['GET', 'POST'])
-def orders():
-    """Выводим/добавляем заказы"""
-    pass
-
-
-@app.route('/order/<int:oid>')
-def order_by_id(oid):
-    """Выводим/меняем/удаляем заказ"""
-
-    pass
-
-
-@app.route('/offers/', methods=['GET', 'POST'])
-def offers():
-    """Выводим/добавляем предложения"""
-    pass
-
-
-@app.route('/offer/<int:oid>')
-def offer_by_id(oid):
-    """Выводим/меняем/удаляем предложение"""
-    pass
+# @app.route('/user/<int:uid>', method=['GET', 'PUT', 'DELETE'])
+# def user_by_id(uid):
+#     """Выводим/меняем/удаляем пользователя"""
+#     pass
+#
+#
+# @app.route('/orders/', methods=['GET', 'POST'])
+# def orders():
+#     """Выводим/добавляем заказы"""
+#     pass
+#
+#
+# @app.route('/order/<int:oid>')
+# def order_by_id(oid):
+#     """Выводим/меняем/удаляем заказ"""
+#
+#     pass
+#
+#
+# @app.route('/offers/', methods=['GET', 'POST'])
+# def offers():
+#     """Выводим/добавляем предложения"""
+#     pass
+#
+#
+# @app.route('/offer/<int:oid>')
+# def offer_by_id(oid):
+#     """Выводим/меняем/удаляем предложение"""
+#     pass
 
 
 if __name__ == '__main__':
