@@ -263,7 +263,7 @@ def offers():
             return 'Ключи запроса указаны неверно!'
 
 
-@app.route('/offers/<int:oid>/')
+@app.route('/offers/<int:oid>/', methods=['GET', 'PUT', 'DELETE'])
 def offer_by_id(oid):
     """Выводим/меняем/удаляем предложение"""
     offer = db.session.query(Offer).get(oid)
