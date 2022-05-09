@@ -135,7 +135,7 @@ def users():
             return 'Ключи запроса указаны неверно!'
 
 
-@app.route('/users/<int:uid>', methods=['GET', 'PUT', 'DELETE'])
+@app.route('/users/<int:uid>/', methods=['GET', 'PUT', 'DELETE'])
 def user_by_id(uid):
     """Выводим/меняем/удаляем пользователя"""
     user = db.session.query(User).get(uid)
@@ -169,30 +169,84 @@ def user_by_id(uid):
         return "Пользователь успешно удалён из базы!"
 
 
+@app.route('/orders/', methods=['GET', 'POST'])
+def orders():
+    """Выводим/добавляем заказы"""
+    if request.method == 'GET':
+        result_list = []
+        for order in db.session.query(Order).all():
+            result_list.append(get_order(order))
+        return jsonify(result_list)
 
-# @app.route('/orders/', methods=['GET', 'POST'])
-# def orders():
-#     """Выводим/добавляем заказы"""
-#     pass
-#
-#
-# @app.route('/order/<int:oid>')
-# def order_by_id(oid):
-#     """Выводим/меняем/удаляем заказ"""
-#
-#     pass
-#
-#
-# @app.route('/offers/', methods=['GET', 'POST'])
-# def offers():
-#     """Выводим/добавляем предложения"""
-#     pass
-#
-#
-# @app.route('/offer/<int:oid>')
-# def offer_by_id(oid):
-#     """Выводим/меняем/удаляем предложение"""
-#     pass
+    elif request.method == 'POST':
+        data = request.json
+        logging.info(f'Данные полученные через POST запрос {data}')
+        allowed_keys = {'name', 'description', 'start_date', 'end_date', 'address', 'price', 'customer_id', 'executor_id'}
+        if check_keys(data, allowed_keys):
+            new_order = Order(
+                name=data.get('name'),
+                description=data.get('description'),
+                start_date=datetime.strptime(data['start_date'], '%m/%d/%Y'),
+                end_date=datetime.strptime(data['end_date'], '%m/%d/%Y'),
+                address=data.get('address'),
+                price=data.get('price'),
+                customer_id=data.get('customer_id'),
+                executor_id=data.get('executor_id')
+            )
+
+            with db.session.begin():
+                db.session.add(new_order)
+            return "Новый пользователь добавлен в базу!"
+
+        else:
+            return 'Ключи запроса указаны неверно!'
+
+
+@app.route('/orders/<int:oid>/', methods=['GET', 'PUT', 'DELETE'])
+def order_by_id(oid):
+    """Выводим/меняем/удаляем заказ"""
+    order = db.session.query(Order).get(oid)
+    if not order:
+        return 'В базе нет заказа с таким ID'
+
+    elif request.method == 'GET':
+        return jsonify(get_order(order))
+
+    elif request.method == 'PUT':
+        new_order = request.json
+        logging.info(f'Данные полученные через PUT запрос {new_order}')
+        order.name = new_order.get('name', order.name)
+        order.description = new_order.get('description', order.description)
+        order.start_date = datetime.strptime(new_order.get('start_date', order.start_date), '%m/%d/%Y')
+        # order.start_date = new_order.get('start_date', order.start_date)
+        order.end_date = datetime.strptime(new_order.get('end_date', order.end_date), '%m/%d/%Y')
+        # order.end_date = new_order.get('end_date', order.end_date)
+        order.address = new_order.get('address', order.address)
+        order.price = new_order.get('price', order.price)
+        order.customer_id = new_order.get('customer_id', order.customer_id)
+        order.executor_id = new_order.get('executor_id', order.executor_id)
+
+        db.session.add(order)
+        db.session.commit()
+
+        return 'Данные заказа успешно обновлены'
+
+    elif request.method == 'DELETE':
+        db.session.delete(order)
+        db.session.commit()
+        return "Пользователь успешно удалён из базы!"
+
+
+@app.route('/offers/', methods=['GET', 'POST'])
+def offers():
+    """Выводим/добавляем предложения"""
+    pass
+
+
+@app.route('/offer/<int:oid>')
+def offer_by_id(oid):
+    """Выводим/меняем/удаляем предложение"""
+    pass
 
 
 if __name__ == '__main__':
