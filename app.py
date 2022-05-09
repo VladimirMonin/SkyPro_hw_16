@@ -155,8 +155,11 @@ def user_by_id(uid):
         user.phone = new_user.get('phone', user.phone)
         user.role = new_user.get('role', user.role)
 
-        with db.session.begin():
-            db.session.add(new_user)
+# sqlalchemy.exc.InvalidRequestError: A transaction is already begun on this Session. FTW
+# sqlalchemy.orm.exc.UnmappedInstanceError: Class 'builtins.dict' is not mapped FTW(!!!)))))) коммитим User а не new_user
+
+        db.session.add(user)
+        db.session.commit()
 
         return 'Данные пользователя успешно обновлены'
 
